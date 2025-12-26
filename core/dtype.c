@@ -1,4 +1,4 @@
-#include <dtype.h>
+#include "dtype.h"
 
 
 static const TsDTypeInfo TS_DTYPE_TABLE[TS_DTYPE_COUNT] = {
@@ -25,7 +25,7 @@ const char* ts_dtype_name(TsDType dt) {
 
 size_t ts_dtype_itemsize(TsDType dt) {
     const TsDTypeInfo* info = ts_dtype_info(dt);
-    return info ? info->itemsize : -1;
+    return info ? info->itemsize : (size_t)0;
 }
 
 
