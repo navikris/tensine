@@ -10,21 +10,30 @@
 /*
 Ownership rules:
 - TsTensor owns shape and strides
-- TsTensor owns data only if owns_data == 1
+- TsTensorStorage owns data buffer and deallocation based on ref_count
 */
-typedef struct {
-    void* data;         // raw data buffer
-    int owns_data;      // ownership flag
-    TsDType dtype;      // element type
 
-    size_t ndim;        // number of dimensions
-    size_t* shape;      // length ndim
-    size_t* strides;    // length ndim in bytes
-    size_t numel;       // total num elements, must match shape
+
+typedef struct {
+    void* data;         // storage pointer
+    int owns_data;      // ownership flag
+    size_t nbytes;      // total num bytes
+    size_t ref_count;   // number of reference
+} TsTensorStorage;
+
+
+typedef struct {
+    TsTensorStorage* storage;   // data storage
+    TsDType dtype;              // element type
+
+    size_t ndim;                // number of dimensions
+    size_t* shape;              // length ndim
+    size_t* strides;            // length ndim in bytes
+    size_t numel;               // total num elements, must match shape
 
     // TODO: replace void with TsGradFn struct
-    int requires_grad;  // autograd flag
-    void* grad_fn;      // backward node
+    int requires_grad;          // autograd flag
+    void* grad_fn;              // backward node
 } TsTensor;
 
 
@@ -32,6 +41,13 @@ typedef struct {
 TsTensor* ts_tensor_create(TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
 TsTensor* ts_tensor_from_buffer(void* data, TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
 void ts_tensor_free(TsTensor* tensor);
+TsDType ts_tensor_dtype(const TsTensor* t);
+size_t ts_tensor_ndim(const TsTensor* t);
+size_t ts_tensor_numel(const TsTensor* t);
+const size_t* ts_tensor_shape(const TsTensor* t);
+int ts_tensor_is_contiguous(const TsTensor* t);
+TsTensor* ts_tensor_shallow_copy(const TsTensor* src);
+TsTensor* ts_tensor_clone(const TsTensor* src);
 
 
 #endif /* TENSINE_TENSOR_H */
