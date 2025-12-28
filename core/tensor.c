@@ -7,6 +7,18 @@
 #include "dtype.h"
 
 
+static size_t _get_numel(const size_t* shape, size_t ndim) {
+    size_t numel = 1;
+    for (size_t i = 0; i < ndim; ++i) {
+        assert(shape[i] != 0);
+        assert(numel < SIZE_MAX / shape[i]);
+        numel *= shape[i];
+    }
+
+    return numel;
+}
+
+
 static size_t _get_num_bytes(TsDType dtype, size_t numel) {
     size_t itemsize = ts_dtype_itemsize(dtype);
     if (itemsize == 0) return 0;
@@ -32,6 +44,47 @@ static void calculate_strides(
 
     for (size_t i = ndim - 1; i-- > 0;) {
         strides[i] = strides[i + 1] * shape[i + 1];
+    }
+}
+
+
+static void ts_copy_strided(
+    void* dst,
+    const size_t* dst_stride,
+    const void* src,
+    const size_t* src_stride,
+    const size_t* shape,
+    int ndim,
+    size_t itemsize
+) {
+    size_t idx[TS_MAX_DIMS] = {0};
+
+    while (1) {
+        size_t src_off = 0;
+        size_t dst_off = 0;
+
+        for (int d = 0; d < ndim; ++d) {
+            src_off += idx[d] * src_stride[d];
+            dst_off += idx[d] * dst_stride[d];
+        }
+
+        memcpy(
+            (char*)dst + dst_off,
+            (const char*)src + src_off,
+            itemsize
+        );
+
+        // increment multi-dimensional index
+        int d = ndim - 1;
+        while (d >= 0) {
+            idx[d]++;
+            if (idx[d] < shape[d])
+                break;
+            idx[d] = 0;
+            d--;
+        }
+        if (d < 0)
+            break;
     }
 }
 
@@ -108,7 +161,6 @@ const size_t* ts_tensor_shape(const TsTensor* t) {
 }
 
 
-// Creates contiguous tensors
 TsTensor* ts_tensor_create(
     TsDType dtype,
     size_t ndim,
@@ -121,14 +173,7 @@ TsTensor* ts_tensor_create(
     TsTensor* tensor = malloc(sizeof(TsTensor));
     if (!tensor) return NULL;
 
-    size_t numel = 1;
-    for (size_t i = 0; i < ndim; ++i) {
-        if (shape[i] != 0 && numel > SIZE_MAX / shape[i]) {
-            free(tensor);
-            return NULL;
-        }
-        numel *= shape[i];
-    }
+    size_t numel = _get_numel(shape, ndim);
 
     tensor->storage = ts_storage_create(_get_num_bytes(dtype, numel));
     if (!tensor->storage) {
@@ -160,6 +205,50 @@ TsTensor* ts_tensor_create(
 }
 
 
+TsTensor* ts_tensor_create_like(
+    const TsTensor* src,
+    int allocate_storage
+) {
+    if (!src) return NULL;
+
+    TsTensor* tensor = malloc(sizeof(TsTensor));
+    if (!tensor) return NULL;
+
+    if (allocate_storage) {
+        tensor->storage = ts_storage_create(_get_num_bytes(src->dtype, src->numel));
+        if (!tensor->storage) {
+            free(tensor);
+            return NULL;
+        }
+    }
+
+    tensor->dtype = src->dtype;
+    tensor->ndim = src->ndim;
+    tensor->numel = src->numel;
+    tensor->requires_grad = src->requires_grad;
+    tensor->grad_fn = NULL;
+
+    tensor->shape = malloc(tensor->ndim * sizeof(size_t));
+    tensor->strides = malloc(tensor->ndim * sizeof(size_t));
+
+    if (!tensor->shape || !tensor->strides) {
+        if (allocate_storage) {
+            ts_storage_release(tensor->storage);
+        }
+        free(tensor->shape);
+        free(tensor->strides);
+        free(tensor);
+        return NULL;
+    }
+
+    // logical shape will be copied over, strides are recalculated for contiguous tensor
+    memcpy(tensor->shape, src->shape, tensor->ndim * sizeof(size_t));
+    calculate_strides(tensor->dtype, tensor->ndim, tensor->shape, tensor->strides);
+
+    return tensor;
+}
+
+
 TsTensor* ts_tensor_from_buffer(
     void* data,
     TsDType dtype,
@@ -174,14 +263,7 @@ TsTensor* ts_tensor_from_buffer(
     TsTensor* tensor = malloc(sizeof(TsTensor));
     if (!tensor) return NULL;
 
-    size_t numel = 1;
-    for (size_t i = 0; i < ndim; ++i) {
-        if (shape[i] != 0 && numel > SIZE_MAX / shape[i]) {
-            free(tensor);
-            return NULL;
-        }
-        numel *= shape[i];
-    }
+    size_t numel = _get_numel(shape, ndim);
 
     tensor->storage = ts_storage_from_buffer(
         data, 
@@ -230,14 +312,7 @@ TsTensor* ts_tensor_from_storage(
     TsTensor* tensor = malloc(sizeof(TsTensor));
     if (!tensor) return NULL;
 
-    size_t numel = 1;
-    for (size_t i = 0; i < ndim; ++i) {
-        if (shape[i] != 0 && numel > SIZE_MAX / shape[i]) {
-            free(tensor);
-            return NULL;
-        }
-        numel *= shape[i];
-    }
+    size_t numel = _get_numel(shape, ndim);
 
     ts_storage_retain(storage);
     tensor->storage = storage;
@@ -300,6 +375,27 @@ int ts_tensor_is_contiguous(const TsTensor* t) {
 }
 
 
+TsTensor* ts_tensor_to_contiguous(TsTensor* src) {
+    if (ts_tensor_is_contiguous(src)) {
+        return ts_tensor_shallow_copy(src);
+    };
+
+    TsTensor* tensor = ts_tensor_create_like(src, 1);
+
+    ts_copy_strided(
+        tensor->storage->data,
+        tensor->strides,
+        src->storage->data,
+        src->strides,
+        tensor->shape,
+        tensor->ndim,
+        ts_dtype_itemsize(tensor->dtype)
+    );
+
+    return tensor;
+}
+
+
 TsTensor* ts_tensor_shallow_copy(const TsTensor* src) {
     if (!src) return NULL;
     
@@ -318,14 +414,7 @@ TsTensor* ts_tensor_clone(const TsTensor* src) {
     if (!src || !src->storage || !src->storage->data)
         return NULL;
     
-    // TODO: create ts_tensor_create_like
-    TsTensor* tensor = ts_tensor_create(
-        src->dtype,
-        src->ndim,
-        src->shape,
-        src->requires_grad,
-        NULL
-    );
+    TsTensor* tensor = ts_tensor_create_like(src, 1);
     if (!tensor) return NULL;
 
     memcpy(tensor->storage->data, src->storage->data, src->storage->nbytes);
