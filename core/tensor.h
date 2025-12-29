@@ -42,7 +42,7 @@ typedef struct {
 
 /* Public API */
 TsTensor* ts_tensor_create(TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
-TsTensor* ts_tensor_create_like(const TsTensor* src, int allocate_storage);
+TsTensor* ts_tensor_empty_like(const TsTensor* src);
 TsTensor* ts_tensor_from_buffer(void* data, TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
 TsTensor* ts_tensor_from_storage(TsTensorStorage* storage, TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
 void ts_tensor_free(TsTensor* tensor);

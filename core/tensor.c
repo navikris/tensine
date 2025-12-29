@@ -205,21 +205,16 @@ TsTensor* ts_tensor_create(
 }
 
 
-TsTensor* ts_tensor_create_like(
-    const TsTensor* src,
-    int allocate_storage
-) {
+TsTensor* ts_tensor_empty_like(const TsTensor* src) {
     if (!src) return NULL;
 
     TsTensor* tensor = malloc(sizeof(TsTensor));
     if (!tensor) return NULL;
 
-    if (allocate_storage) {
-        tensor->storage = ts_storage_create(_get_num_bytes(src->dtype, src->numel));
-        if (!tensor->storage) {
-            free(tensor);
-            return NULL;
-        }
+    tensor->storage = ts_storage_create(_get_num_bytes(src->dtype, src->numel));
+    if (!tensor->storage) {
+        free(tensor);
+        return NULL;
     }
 
     tensor->dtype = src->dtype;
@@ -232,9 +227,7 @@ TsTensor* ts_tensor_create_like(
     tensor->strides = malloc(tensor->ndim * sizeof(size_t));
 
     if (!tensor->shape || !tensor->strides) {
-        if (allocate_storage) {
-            ts_storage_release(tensor->storage);
-        }
+        ts_storage_release(tensor->storage);
         free(tensor->shape);
         free(tensor->strides);
         free(tensor);
@@ -380,7 +373,7 @@ TsTensor* ts_tensor_to_contiguous(TsTensor* src) {
         return ts_tensor_shallow_copy(src);
     };
 
-    TsTensor* tensor = ts_tensor_create_like(src, 1);
+    TsTensor* tensor = ts_tensor_empty_like(src);
 
     ts_copy_strided(
         tensor->storage->data,
@@ -414,7 +407,7 @@ TsTensor* ts_tensor_clone(const TsTensor* src) {
     if (!src || !src->storage || !src->storage->data)
         return NULL;
     
-    TsTensor* tensor = ts_tensor_create_like(src, 1);
+    TsTensor* tensor = ts_tensor_empty_like(src);
     if (!tensor) return NULL;
 
     memcpy(tensor->storage->data, src->storage->data, src->storage->nbytes);
