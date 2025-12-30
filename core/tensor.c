@@ -3,8 +3,9 @@
 #include <string.h>
 #include <assert.h>
 
-#include "tensor.h"
 #include "dtype.h"
+#include "tensor.h"
+#include "tensor_print.h"
 
 
 static size_t _get_numel(const size_t* shape, size_t ndim) {
@@ -30,7 +31,7 @@ static size_t _get_num_bytes(TsDType dtype, size_t numel) {
 }
 
 
-static void calculate_strides(
+static void set_strides_contiguous(
     TsDType dtype,
     size_t ndim,
     const size_t* shape,
@@ -199,7 +200,7 @@ TsTensor* ts_tensor_create(
     }
 
     memcpy(tensor->shape, shape, ndim * sizeof(size_t));
-    calculate_strides(dtype, ndim, tensor->shape, tensor->strides);
+    set_strides_contiguous(dtype, ndim, tensor->shape, tensor->strides);
 
     return tensor;
 }
@@ -236,7 +237,7 @@ TsTensor* ts_tensor_empty_like(const TsTensor* src) {
 
     // logical shape will be copied over, strides are recalculated for contiguous tensor
     memcpy(tensor->shape, src->shape, tensor->ndim * sizeof(size_t));
-    calculate_strides(tensor->dtype, tensor->ndim, tensor->shape, tensor->strides);
+    set_strides_contiguous(tensor->dtype, tensor->ndim, tensor->shape, tensor->strides);
 
     return tensor;
 }
@@ -285,7 +286,7 @@ TsTensor* ts_tensor_from_buffer(
     }
 
     memcpy(tensor->shape, shape, ndim * sizeof(size_t));
-    calculate_strides(dtype, ndim, tensor->shape, tensor->strides);
+    set_strides_contiguous(dtype, ndim, tensor->shape, tensor->strides);
 
     return tensor;
 }
@@ -332,7 +333,7 @@ TsTensor* ts_tensor_from_storage(
     }
 
     memcpy(tensor->shape, shape, ndim * sizeof(size_t));
-    calculate_strides(dtype, ndim, tensor->shape, tensor->strides);
+    set_strides_contiguous(dtype, ndim, tensor->shape, tensor->strides);
 
     return tensor;
 }
@@ -412,4 +413,10 @@ TsTensor* ts_tensor_clone(const TsTensor* src) {
 
     memcpy(tensor->storage->data, src->storage->data, src->storage->nbytes);
     return tensor;
+}
+
+
+void ts_tensor_print(const TsTensor* t) {
+    if (!t) return;
+    ts_tensor_print_impl(t);
 }

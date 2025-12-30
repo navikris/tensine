@@ -54,6 +54,7 @@ int ts_tensor_is_contiguous(const TsTensor* t);
 TsTensor* ts_tensor_to_contiguous(TsTensor* src);
 TsTensor* ts_tensor_shallow_copy(const TsTensor* src);
 TsTensor* ts_tensor_clone(const TsTensor* src);
+void ts_tensor_print(const TsTensor* t);
 
 
 #endif /* TENSINE_TENSOR_H */
