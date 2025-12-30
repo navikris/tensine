@@ -188,9 +188,57 @@ static void test_tensor_clone(void) {
 }
 
 
+static void test_tensor_view(void) {
+    TestTensorCreate TEST_CASES[] = {
+        {ndim4, shape4},
+    };
+    int num_test_cases = (int)(sizeof(TEST_CASES) / sizeof(TEST_CASES[0]));
+    int test_id = 0;
+    
+    test_id = 0;
+    printf("\n========== Testing Tensor Reshape ==========\n");
+    while(test_id < num_test_cases) {
+        printf("-TestID:%d\n", test_id);
+        float buffer[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+        TsTensor* tensor = ts_tensor_from_buffer(
+            buffer,
+            TS_DTYPE_FLOAT32,
+            TEST_CASES[test_id].ndim,
+            TEST_CASES[test_id].shape,
+            0,
+            NULL
+        );
+        assert(tensor != NULL);
+        assert(tensor->ndim == TEST_CASES[test_id].ndim);
+        assert(tensor->storage != NULL);
+
+        printf("Original Tensor:\n");
+        ts_tensor_print(tensor);
+
+        size_t new_shape[] = {1, 3, 4};
+        TsTensor* reshaped_tensor = ts_tensor_reshape(tensor, new_shape, (size_t)3);
+        printf("Reshaped Tensor:\n");
+        ts_tensor_print(reshaped_tensor);
+
+        size_t permute_order[] = {0, 2, 1};
+        TsTensor* permuted_tensor = ts_tensor_permute(reshaped_tensor, permute_order);
+        printf("Permuted Tensor:\n");
+        ts_tensor_print(permuted_tensor);
+
+        ts_tensor_free(tensor);
+        ts_tensor_free(reshaped_tensor);
+        ts_tensor_free(permuted_tensor);
+
+        printf("\t PASSED\n");
+        ++test_id;
+    }
+}
+
+
 int main(void) {
     test_tensor_create();
     test_tensor_shallow_copy();
     test_tensor_clone();
+    test_tensor_view();
     return 0;
 }

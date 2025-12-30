@@ -237,7 +237,12 @@ TsTensor* ts_tensor_empty_like(const TsTensor* src) {
 
     // logical shape will be copied over, strides are recalculated for contiguous tensor
     memcpy(tensor->shape, src->shape, tensor->ndim * sizeof(size_t));
-    set_strides_contiguous(tensor->dtype, tensor->ndim, tensor->shape, tensor->strides);
+    set_strides_contiguous(
+        tensor->dtype,
+        tensor->ndim,
+        tensor->shape,
+        tensor->strides
+    );
 
     return tensor;
 }
@@ -369,7 +374,7 @@ int ts_tensor_is_contiguous(const TsTensor* t) {
 }
 
 
-TsTensor* ts_tensor_to_contiguous(TsTensor* src) {
+TsTensor* ts_tensor_to_contiguous(const TsTensor* src) {
     if (ts_tensor_is_contiguous(src)) {
         return ts_tensor_shallow_copy(src);
     };
@@ -387,6 +392,50 @@ TsTensor* ts_tensor_to_contiguous(TsTensor* src) {
     );
 
     return tensor;
+}
+
+
+TsTensor* ts_tensor_reshape(
+    const TsTensor* src,
+    size_t* new_shape,
+    size_t new_ndim
+) {
+    if (!src || !new_shape || (new_ndim==0)) return NULL;
+
+    if (ts_tensor_is_contiguous(src)) {
+        TsTensor* viewed_tensor = ts_tensor_shallow_copy(src);
+        viewed_tensor->ndim = new_ndim;        
+        memcpy(viewed_tensor->shape, new_shape, new_ndim * sizeof(size_t));
+        set_strides_contiguous(
+            viewed_tensor->dtype,
+            viewed_tensor->ndim,
+            viewed_tensor->shape,
+            viewed_tensor->strides
+        );
+        return viewed_tensor;
+    }
+
+    // TODO: Add support for non contiguous src tensor
+    // Fallback to contiguous for now
+    TsTensor* src_contiguous = ts_tensor_to_contiguous(src);
+    TsTensor* viewed_tensor = ts_tensor_reshape(src_contiguous, new_shape, new_ndim);
+    ts_tensor_free(src_contiguous);
+
+    return viewed_tensor;
+}
+
+
+TsTensor* ts_tensor_permute(const TsTensor* src, size_t* permute_order) {
+    if (!src || !permute_order) return NULL;
+
+    TsTensor* viewed_tensor = ts_tensor_shallow_copy(src);
+    // assuming permute order matches ndim properly
+    for (size_t dim = 0; dim < src->ndim; ++dim) {
+        viewed_tensor->shape[dim] = src->shape[permute_order[dim]];
+        viewed_tensor->strides[dim] = src->strides[permute_order[dim]];
+    }
+
+    return viewed_tensor;
 }
 
 

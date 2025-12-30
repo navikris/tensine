@@ -40,20 +40,34 @@ typedef struct {
 } TsTensor;
 
 
-/* Public API */
+/* Public APIs */
+
+/* Creation/Destruction */
 TsTensor* ts_tensor_create(TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
 TsTensor* ts_tensor_empty_like(const TsTensor* src);
 TsTensor* ts_tensor_from_buffer(void* data, TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
 TsTensor* ts_tensor_from_storage(TsTensorStorage* storage, TsDType dtype, size_t ndim, const size_t* shape, int requires_grad, void* grad_fn);
 void ts_tensor_free(TsTensor* tensor);
+
+/* Metadata view */
 TsDType ts_tensor_dtype(const TsTensor* t);
 size_t ts_tensor_ndim(const TsTensor* t);
 size_t ts_tensor_numel(const TsTensor* t);
 const size_t* ts_tensor_shape(const TsTensor* t);
-int ts_tensor_is_contiguous(const TsTensor* t);
-TsTensor* ts_tensor_to_contiguous(TsTensor* src);
+
+/* Alias ops */
 TsTensor* ts_tensor_shallow_copy(const TsTensor* src);
+
+/* View ops */
+TsTensor* ts_tensor_reshape(const TsTensor* src, size_t* new_shape, size_t new_ndim);
+TsTensor* ts_tensor_permute(const TsTensor* src, size_t* permute_order);
+
+/* Copy/Layout */
+int ts_tensor_is_contiguous(const TsTensor* t);
+TsTensor* ts_tensor_to_contiguous(const TsTensor* src);
 TsTensor* ts_tensor_clone(const TsTensor* src);
+
+/* Print */
 void ts_tensor_print(const TsTensor* t);
 
 
