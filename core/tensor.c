@@ -54,6 +54,7 @@ static void ts_copy_strided(
     const size_t* dst_stride,
     const void* src,
     const size_t* src_stride,
+    const size_t* src_offset,
     const size_t* shape,
     int ndim,
     size_t itemsize
@@ -65,7 +66,7 @@ static void ts_copy_strided(
         size_t dst_off = 0;
 
         for (int d = 0; d < ndim; ++d) {
-            src_off += idx[d] * src_stride[d];
+            src_off += (idx[d] + src_offset[d]) * src_stride[d];
             dst_off += idx[d] * dst_stride[d];
         }
 
@@ -380,12 +381,14 @@ TsTensor* ts_tensor_to_contiguous(const TsTensor* src) {
     };
 
     TsTensor* tensor = ts_tensor_empty_like(src);
+    size_t src_offsets[TS_MAX_DIMS] = {0}; // HACK: till src->offsets gets used
 
     ts_copy_strided(
         tensor->storage->data,
         tensor->strides,
         src->storage->data,
         src->strides,
+        src_offsets,
         tensor->shape,
         tensor->ndim,
         ts_dtype_itemsize(tensor->dtype)
@@ -397,13 +400,15 @@ TsTensor* ts_tensor_to_contiguous(const TsTensor* src) {
 
 TsTensor* ts_tensor_reshape(
     const TsTensor* src,
-    size_t* new_shape,
-    size_t new_ndim
+    const size_t* new_shape,
+    const size_t new_ndim
 ) {
     if (!src || !new_shape || (new_ndim==0)) return NULL;
 
     if (ts_tensor_is_contiguous(src)) {
         TsTensor* viewed_tensor = ts_tensor_shallow_copy(src);
+        if (!viewed_tensor) return NULL;
+
         viewed_tensor->ndim = new_ndim;        
         memcpy(viewed_tensor->shape, new_shape, new_ndim * sizeof(size_t));
         set_strides_contiguous(
@@ -425,15 +430,80 @@ TsTensor* ts_tensor_reshape(
 }
 
 
-TsTensor* ts_tensor_permute(const TsTensor* src, size_t* permute_order) {
+TsTensor* ts_tensor_permute(const TsTensor* src, const size_t* permute_order) {
     if (!src || !permute_order) return NULL;
 
     TsTensor* viewed_tensor = ts_tensor_shallow_copy(src);
+    if (!viewed_tensor) return NULL;
+
     // assuming permute order matches ndim properly
     for (size_t dim = 0; dim < src->ndim; ++dim) {
         viewed_tensor->shape[dim] = src->shape[permute_order[dim]];
         viewed_tensor->strides[dim] = src->strides[permute_order[dim]];
     }
+
+    return viewed_tensor;
+}
+
+
+TsTensor* ts_tensor_transpose(const TsTensor* src, size_t dim_1, size_t dim_2) {
+    if (!src) return NULL;
+    assert (dim_1 < src->ndim && dim_2 < src->ndim);
+
+    TsTensor* viewed_tensor = ts_tensor_shallow_copy(src);
+    if (!viewed_tensor) return NULL;
+
+    viewed_tensor->shape[dim_1] = src->shape[dim_2];
+    viewed_tensor->strides[dim_1] = src->strides[dim_2];
+    viewed_tensor->shape[dim_2] = src->shape[dim_1];
+    viewed_tensor->strides[dim_2] = src->strides[dim_1];
+
+    return viewed_tensor;
+}
+
+
+TsTensor* ts_tensor_slice(const TsTensor* src, const size_t* start_idxs, const size_t* end_idxs) {
+    if (!src || !start_idxs || (end_idxs==0)) return NULL;
+
+    if (ts_tensor_is_contiguous(src)) {
+        TsTensor* viewed_tensor = ts_tensor_empty_like(src);
+        if (!viewed_tensor) return NULL;
+
+        // For future reference, shallow copy instead of clone
+        // TsTensor* viewed_tensor = ts_tensor_shallow_copy(src);
+        // memcpy(viewed_tensor->offsets, start_idxs, viewed_tensor->ndim * sizeof(size_t));
+
+        // Update shape and strides to match slice
+        for (size_t dim = 0; dim < src->ndim; ++dim) {
+            viewed_tensor->shape[dim] = end_idxs[dim] - start_idxs[dim];
+        }
+        set_strides_contiguous(
+            viewed_tensor->dtype,
+            viewed_tensor->ndim,
+            viewed_tensor->shape,
+            viewed_tensor->strides
+        );
+
+        // Clone the tensor data in contiguous layout
+        ts_copy_strided(
+            viewed_tensor->storage->data,
+            viewed_tensor->strides,
+            src->storage->data,
+            src->strides,
+            start_idxs,
+            viewed_tensor->shape,
+            viewed_tensor->ndim,
+            ts_dtype_itemsize(viewed_tensor->dtype)
+        );
+
+        return viewed_tensor; // will return a cloned tensor for all cases currently
+    }
+
+    // TODO: Add support for non contiguous src tensor
+    // Fallback to contiguous for now
+    TsTensor* src_contiguous = ts_tensor_to_contiguous(src);
+    TsTensor* viewed_tensor = ts_tensor_slice(src_contiguous, start_idxs, end_idxs);
+    ts_tensor_free(src_contiguous);
 
     return viewed_tensor;
 }

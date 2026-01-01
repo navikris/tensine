@@ -196,7 +196,7 @@ static void test_tensor_view(void) {
     int test_id = 0;
     
     test_id = 0;
-    printf("\n========== Testing Tensor Reshape ==========\n");
+    printf("\n========== Testing Tensor View OPS ==========\n");
     while(test_id < num_test_cases) {
         printf("-TestID:%d\n", test_id);
         float buffer[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
@@ -215,19 +215,31 @@ static void test_tensor_view(void) {
         printf("Original Tensor:\n");
         ts_tensor_print(tensor);
 
-        size_t new_shape[] = {1, 3, 4};
+        size_t new_shape[] = {3, 4, 1};
         TsTensor* reshaped_tensor = ts_tensor_reshape(tensor, new_shape, (size_t)3);
         printf("Reshaped Tensor:\n");
         ts_tensor_print(reshaped_tensor);
 
-        size_t permute_order[] = {0, 2, 1};
+        size_t permute_order[] = {2, 0, 1};
         TsTensor* permuted_tensor = ts_tensor_permute(reshaped_tensor, permute_order);
         printf("Permuted Tensor:\n");
         ts_tensor_print(permuted_tensor);
 
+        TsTensor* transposed_tensor = ts_tensor_transpose(permuted_tensor, (size_t)1, (size_t)2);
+        printf("Transposed Tensor:\n");
+        ts_tensor_print(transposed_tensor);
+
+        size_t slice_start_idxs[] = {0, 1, 1};
+        size_t slice_end_idxs[] = {1, 3, 3};
+        TsTensor* sliced_tensor = ts_tensor_slice(transposed_tensor, slice_start_idxs, slice_end_idxs);
+        printf("Sliced Tensor:\n");
+        ts_tensor_print(sliced_tensor);
+
         ts_tensor_free(tensor);
         ts_tensor_free(reshaped_tensor);
         ts_tensor_free(permuted_tensor);
+        ts_tensor_free(transposed_tensor);
+        ts_tensor_free(sliced_tensor);
 
         printf("\t PASSED\n");
         ++test_id;

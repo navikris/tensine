@@ -12,7 +12,7 @@
 
 /*
 Ownership rules:
-- TsTensor owns shape and strides
+- TsTensor owns shape, strides and offsets
 - TsTensorStorage owns data buffer and deallocation based on ref_count
 */
 
@@ -32,6 +32,7 @@ typedef struct {
     size_t ndim;                // number of dimensions
     size_t* shape;              // length ndim
     size_t* strides;            // length ndim in bytes
+    size_t* offsets;            // stride offsets lenfth ndim in bytes (unused for now)
     size_t numel;               // total num elements, must match shape
 
     // TODO: replace void with TsGradFn struct
@@ -59,8 +60,10 @@ const size_t* ts_tensor_shape(const TsTensor* t);
 TsTensor* ts_tensor_shallow_copy(const TsTensor* src);
 
 /* View ops */
-TsTensor* ts_tensor_reshape(const TsTensor* src, size_t* new_shape, size_t new_ndim);
-TsTensor* ts_tensor_permute(const TsTensor* src, size_t* permute_order);
+TsTensor* ts_tensor_reshape(const TsTensor* src, const size_t* new_shape, size_t new_ndim);
+TsTensor* ts_tensor_permute(const TsTensor* src, const size_t* permute_order);
+TsTensor* ts_tensor_transpose(const TsTensor* src, size_t dim_1, size_t dim_2);
+TsTensor* ts_tensor_slice(const TsTensor* src, const size_t* start_idxs, const size_t* end_idxs);
 
 /* Copy/Layout */
 int ts_tensor_is_contiguous(const TsTensor* t);
