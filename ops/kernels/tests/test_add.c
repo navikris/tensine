@@ -100,6 +100,7 @@ static void test_add_fp32(void) {
     }
 }
 
+
 int main(void) {
     test_add_fp32();
     return 0;
