@@ -1,8 +1,8 @@
+#include "tensine/core/dtype.h"
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-
-#include "../dtype.h"
 
 
 int main(void) {

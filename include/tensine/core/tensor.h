@@ -2,9 +2,9 @@
 #define TENSINE_TENSOR_H
 
 
-#include <stddef.h>
+#include "tensine/core/dtype.h"
 
-#include "dtype.h"
+#include <stddef.h>
 
 
 #define TS_MAX_DIMS 4

@@ -1,9 +1,10 @@
-#include <stdio.h>
-#include <stdint.h>
+#include "tensine/core/dtype.h"
+#include "tensine/core/tensor.h"
+#include "tensine/core/tensor_print.h"
 
-#include "dtype.h"
-#include "tensor.h"
-#include "tensor_print.h"
+#include <stdio.h>
+#include <stddef.h>
+#include <stdint.h>
 
 
 static size_t _get_numel_stride(const size_t byte_stride, TsDType dtype) {

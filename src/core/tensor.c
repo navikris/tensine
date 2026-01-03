@@ -1,11 +1,11 @@
+#include "tensine/core/dtype.h"
+#include "tensine/core/tensor.h"
+#include "tensine/core/tensor_print.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
-
-#include "dtype.h"
-#include "tensor.h"
-#include "tensor_print.h"
 
 
 static size_t _get_numel(const size_t* shape, size_t ndim) {

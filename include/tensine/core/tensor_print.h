@@ -2,7 +2,7 @@
 #define TENSINE_TENSOR_PRINT_H
 
 
-#include "tensor.h"
+#include "tensine/core/tensor.h"
 
 
 void ts_tensor_print_impl(const TsTensor* t);

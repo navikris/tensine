@@ -1,9 +1,9 @@
+#include "tensine/core/dtype.h"
+#include "tensine/core/tensor.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
-#include "../tensor.h"
-#include "../dtype.h"
 
 
 typedef struct {

@@ -1,17 +1,17 @@
+#include "tensine/core/dtype.h"
+#include "tensine/core/tensor.h"
+#include "tensine/ops/dispatch/elementwise_ops.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../../../core/tensor.h"
-#include "../../../core/dtype.h"
-#include "../../dispatch/elementwise_ops.h"
-
 
 typedef struct {
     size_t ndim;
     const size_t* shape;
-} TestAdd;
+} TestMul;
 
 
 static const size_t ndim1 = 1;
@@ -38,8 +38,8 @@ static size_t _get_numel(const size_t* shape, size_t ndim) {
 }
 
 
-static void test_add_fp32(void) {
-    TestAdd TEST_CASES[] = {
+static void test_mul_fp32(void) {
+    TestMul TEST_CASES[] = {
         {ndim1, shape1},
         {ndim2, shape2},
         {ndim3, shape3},
@@ -51,8 +51,8 @@ static void test_add_fp32(void) {
     int num_test_cases = (int)(sizeof(TEST_CASES) / sizeof(TEST_CASES[0]));
     int test_id = 0;
     
-    // Tests for ts_add()
-    printf("\n========== Testing OP:Add ==========\n");
+    // Tests for ts_mul()
+    printf("\n========== Testing OP:Mul ==========\n");
     while(test_id < num_test_cases) {
         printf("-TestID:%d\n", test_id);
         TsTensor* tensor_a = ts_tensor_from_buffer(
@@ -77,7 +77,7 @@ static void test_add_fp32(void) {
         assert(ts_tensor_is_contiguous(tensor_a));
         assert(ts_tensor_is_contiguous(tensor_b));
 
-        TsTensor* output = ts_add(tensor_a, tensor_b);
+        TsTensor* output = ts_mul(tensor_a, tensor_b);
         assert(output);
         assert(output->storage != NULL);
         assert(ts_tensor_is_contiguous(output));
@@ -86,7 +86,7 @@ static void test_add_fp32(void) {
         float* out_buffer = (float*)output->storage->data;
         size_t numel = _get_numel(TEST_CASES[test_id].shape, TEST_CASES[test_id].ndim);
         for (size_t i = 0; i < numel; ++i) {
-            assert(out_buffer[i] == in_buffer1[i] * 2.0f);
+            assert(out_buffer[i] == in_buffer1[i] * in_buffer1[i]);
         }
 
         ts_tensor_free(tensor_a);
@@ -102,6 +102,6 @@ static void test_add_fp32(void) {
 
 
 int main(void) {
-    test_add_fp32();
+    test_mul_fp32();
     return 0;
 }

@@ -1,4 +1,6 @@
-#include "dtype.h"
+#include "tensine/core/dtype.h"
+
+#include <stddef.h>
 
 
 static const TsDTypeInfo TS_DTYPE_TABLE[TS_DTYPE_COUNT] = {

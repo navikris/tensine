@@ -1,9 +1,9 @@
+#include "tensine/ops/kernels/add/add.h"
+#include "tensine/ops/kernels/common/elementwise.h"
+
 #include <stdlib.h>
 #include <assert.h>
 #include <stdint.h>
-
-#include "add.h"
-#include "../common/elementwise.h"
 
 
 #define DEFINE_ADD_KERNEL(T, NAME)              \
