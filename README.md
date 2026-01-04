@@ -44,3 +44,9 @@ cd build
 cmake ..
 cmake --build .
 ```
+
+---
+
+## License
+
+MIT License
