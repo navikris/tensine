@@ -1,0 +1,9 @@
+/build/
+/bin/
+/lib/
+/cmake-build-*/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
