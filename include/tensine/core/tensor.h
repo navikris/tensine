@@ -2,6 +2,11 @@
 #define TENSINE_TENSOR_H
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "tensine/core/dtype.h"
 
 #include <stddef.h>
@@ -72,6 +77,11 @@ TsTensor* ts_tensor_clone(const TsTensor* src);
 
 /* Print */
 void ts_tensor_print(const TsTensor* t);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* TENSINE_TENSOR_H */

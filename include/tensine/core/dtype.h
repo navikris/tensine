@@ -2,6 +2,11 @@
 #define TENSINE_DTYPE_H
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include <stddef.h>
 
 
@@ -30,6 +35,11 @@ const char* ts_dtype_name(TsDType dt);
 size_t ts_dtype_itemsize(TsDType dt);
 int ts_dtype_is_floating(TsDType dt);
 int ts_dtype_is_signed(TsDType dt);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* TENSINE_DTYPE_H */

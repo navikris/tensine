@@ -14,13 +14,13 @@ function(add_recursive_sources target dir)
     target_sources(${target} PRIVATE ${sources})
 endfunction()
 
-add_library(tensine SHARED)
-target_compile_options(tensine PRIVATE -Wall -Wextra)
+add_library(tensine_core SHARED)
+target_compile_options(tensine_core PRIVATE -Wall -Wextra)
 
-add_recursive_sources(tensine "${CMAKE_CURRENT_SOURCE_DIR}")
-add_recursive_sources(tensine "${PROJECT_SOURCE_DIR}/include")
+add_recursive_sources(tensine_core "${CMAKE_CURRENT_SOURCE_DIR}")
+add_recursive_sources(tensine_core "${PROJECT_SOURCE_DIR}/include")
 
-target_include_directories(tensine PUBLIC
+target_include_directories(tensine_core PUBLIC
     # For build-time
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     # For install-time
