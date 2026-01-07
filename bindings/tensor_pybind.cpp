@@ -1,5 +1,6 @@
 #include "tensine/core/dtype.h"
 #include "tensine/core/tensor.h"
+#include "tensine_bindings.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -7,24 +8,12 @@
 
 namespace py = pybind11;
 
-
-PYBIND11_MODULE(tensine, m) {
-    py::enum_<TsDType>(m, "Dtype")
-        .value("float32", TsDType::TS_DTYPE_FLOAT32)
-        .value("float64", TsDType::TS_DTYPE_FLOAT64)
-        .value("int32", TsDType::TS_DTYPE_INT32)
-        .value("int64", TsDType::TS_DTYPE_INT64)
-        .value("bool", TsDType::TS_DTYPE_BOOL)
-        .value("count", TsDType::TS_DTYPE_COUNT)
-        .export_values();
-
-    py::class_<TsDTypeInfo>(m, "DtypeInfo")
-        .def_readonly("dtype", &TsDTypeInfo::dtype)
-        .def_readonly("name", &TsDTypeInfo::name)
-        .def_readonly("itemsize", &TsDTypeInfo::itemsize)
-        .def_readonly("is_floating", &TsDTypeInfo::is_floating)
-        .def_readonly("is_signed", &TsDTypeInfo::is_signed);
-
+/* TODO:
+    1. Add shape as property and return as array
+    2. Check for contiguity for from buffer method
+    3. Add support for initalizing from list as well
+*/
+void bind_tensor(py::module_& m) {
     py::class_<TsTensorStorage>(m, "TensorStorage")
         .def_readwrite("data", &TsTensorStorage::data)  
         .def_readonly("owns_data", &TsTensorStorage::owns_data)  
@@ -46,14 +35,14 @@ PYBIND11_MODULE(tensine, m) {
             );
         }),
         py::arg("shape"),
-        py::arg("dtype"),
+        py::arg("dtype") = TsDType::TS_DTYPE_FLOAT32,
         py::arg("requires_grad") = false
         )
         .def(py::init([](
             py::buffer buf,
             TsDType dtype,
             bool requires_grad
-        ) {
+        ) { // FIXME: Numpy inputs are broken
             py::buffer_info info = buf.request();
             return ts_tensor_from_buffer(
                 info.ptr,
@@ -65,7 +54,7 @@ PYBIND11_MODULE(tensine, m) {
             );
         }),
         py::arg("buf"),
-        py::arg("dtype"),
+        py::arg("dtype") = TsDType::TS_DTYPE_FLOAT32,
         py::arg("requires_grad") = false
         )
         .def(py::init([](
@@ -85,7 +74,7 @@ PYBIND11_MODULE(tensine, m) {
         }),
         py::arg("storage"),
         py::arg("shape"),
-        py::arg("dtype"),
+        py::arg("dtype") = TsDType::TS_DTYPE_FLOAT32,
         py::arg("requires_grad") = false
         )
         .def("__del__", [](TsTensor* t) {

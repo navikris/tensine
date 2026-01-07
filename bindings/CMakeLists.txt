@@ -1,7 +1,7 @@
 # tensine/bindings/CMakeLists.txt
 cmake_minimum_required(VERSION 3.31.6)
 
-file(GLOB_RECURSE sources "*.cpp")
+file(GLOB_RECURSE sources "*.cpp" "*hpp")
 
 add_library(tensine_py MODULE)
 
