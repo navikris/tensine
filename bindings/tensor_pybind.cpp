@@ -4,9 +4,30 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 
 
 namespace py = pybind11;
+
+
+TsDType _get_buf_type(const py::array& buf) {
+    auto dt = buf.dtype();
+
+    if (dt.kind() == 'f' && dt.itemsize() == 4)
+        return TsDType::TS_DTYPE_FLOAT32;
+
+    if (dt.kind() == 'f' && dt.itemsize() == 8)
+        return TsDType::TS_DTYPE_FLOAT64;
+
+    if (dt.kind() == 'i' && dt.itemsize() == 4)
+        return TsDType::TS_DTYPE_INT32;
+
+    if (dt.kind() == 'i' && dt.itemsize() == 8)
+        return TsDType::TS_DTYPE_INT64;
+
+    throw std::runtime_error("Unsupported numpy dtype");
+}
+
 
 /* TODO:
     1. Add shape as property and return as array
@@ -39,11 +60,11 @@ void bind_tensor(py::module_& m) {
         py::arg("requires_grad") = false
         )
         .def(py::init([](
-            py::buffer buf,
-            TsDType dtype,
+            py::array array,
             bool requires_grad
-        ) { // FIXME: Numpy inputs are broken
-            py::buffer_info info = buf.request();
+        ) {
+            py::buffer_info info = array.request();
+            TsDType dtype = _get_buf_type(array);
             return ts_tensor_from_buffer(
                 info.ptr,
                 dtype,
@@ -54,7 +75,6 @@ void bind_tensor(py::module_& m) {
             );
         }),
         py::arg("buf"),
-        py::arg("dtype") = TsDType::TS_DTYPE_FLOAT32,
         py::arg("requires_grad") = false
         )
         .def(py::init([](
