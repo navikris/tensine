@@ -26,6 +26,42 @@ void ts_matmul_dispatch(
             );
             break;
         }
+        case TS_DTYPE_FLOAT64: {
+            matmul_f64_cpu(
+                (double*)input_1->storage->data,
+                (double*)input_2->storage->data,
+                (double*)output->storage->data,
+                input_1->shape,
+                input_2->shape,
+                output->shape,
+                output->ndim
+            );
+            break;
+        }
+        case TS_DTYPE_INT32: {
+            matmul_i32_cpu(
+                (int32_t*)input_1->storage->data,
+                (int32_t*)input_2->storage->data,
+                (int32_t*)output->storage->data,
+                input_1->shape,
+                input_2->shape,
+                output->shape,
+                output->ndim
+            );
+            break;
+        }
+        case TS_DTYPE_INT64: {
+            matmul_i64_cpu(
+                (int64_t*)input_1->storage->data,
+                (int64_t*)input_2->storage->data,
+                (int64_t*)output->storage->data,
+                input_1->shape,
+                input_2->shape,
+                output->shape,
+                output->ndim
+            );
+            break;
+        }
         default:
             assert(0 && "dtype not supported for mul");
     }

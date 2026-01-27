@@ -60,7 +60,13 @@ cd build
 cmake ..
 cmake --build .
 ```
+This produces a Python extension module in (tensine/python/tensine.so).
 
+Add to path to use the python library
+
+```
+export PYTHONPATH=$(pwd)/python:$PYTHONPATH
+```
 ---
 
 ## License
