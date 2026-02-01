@@ -63,6 +63,6 @@ void ts_matmul_dispatch(
             break;
         }
         default:
-            assert(0 && "dtype not supported for mul");
+            assert(0 && "dtype not supported for matmul");
     }
 }

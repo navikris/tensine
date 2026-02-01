@@ -1,6 +1,7 @@
 #include "tensine/core/tensor.h"
 #include "tensine/ops/dispatch/elementwise_ops.h"
 #include "tensine/ops/dispatch/matmul_ops.h"
+#include "tensine/ops/dispatch/pooling_ops.h"
 #include "tensine_bindings.hpp"
 
 #include <pybind11/pybind11.h>
@@ -30,5 +31,14 @@ void bind_ops(py::module_& m) {
     },
     py::arg("input1"),
     py::arg("input2")
+    );
+
+    m.def("maxpool2d", [](const TsTensor& input, std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding) {
+        return ts_maxpool2d(&input, kernel_size.data(), stride.data(), padding.data());
+    },
+    py::arg("input"),
+    py::arg("kernel_size"),
+    py::arg("stride") = std::vector<size_t> {1, 1},
+    py::arg("padding") = std::vector<size_t> {0, 0}
     );
 }

@@ -14,12 +14,12 @@ void CONCAT_NAME(matmul_, NAME, _cpu)(
     /* 
     Considerations:
     1. All higher dim tensors to be flattened to [Batch, H, W]
-    2. Only tensors are of contiguous layout 
+    2. Tensors are of contiguous layout 
     */
     size_t numel_to_macc = input_1_shape[ndim - 1];
-    size_t* input_1_strides = _get_strides(input_1_shape, ndim);
-    size_t* input_2_strides = _get_strides(input_2_shape, ndim);
-    size_t* output_strides = _get_strides(output_shape, ndim);
+    size_t* input_1_strides = get_strides(input_1_shape, ndim);
+    size_t* input_2_strides = get_strides(input_2_shape, ndim);
+    size_t* output_strides = get_strides(output_shape, ndim);
     size_t* out_dims = (size_t*)malloc(ndim * sizeof(size_t));
     memset(out_dims, 0, ndim * sizeof(size_t));
 
