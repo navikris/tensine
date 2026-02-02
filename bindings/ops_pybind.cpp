@@ -2,6 +2,7 @@
 #include "tensine/ops/dispatch/elementwise_ops.h"
 #include "tensine/ops/dispatch/matmul_ops.h"
 #include "tensine/ops/dispatch/pooling_ops.h"
+#include "tensine/ops/dispatch/activation_ops.h"
 #include "tensine_bindings.hpp"
 
 #include <pybind11/pybind11.h>
@@ -40,5 +41,12 @@ void bind_ops(py::module_& m) {
     py::arg("kernel_size"),
     py::arg("stride") = std::vector<size_t> {1, 1},
     py::arg("padding") = std::vector<size_t> {0, 0}
+    );
+
+    m.def("softmax", [](const TsTensor& input, size_t dim) {
+        return ts_softmax(&input, dim);
+    },
+    py::arg("input"),
+    py::arg("dim")
     );
 }

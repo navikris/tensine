@@ -16,6 +16,7 @@ endfunction()
 
 add_library(tensine_core SHARED)
 target_compile_options(tensine_core PRIVATE -Wall -Wextra)
+target_link_libraries(tensine_core m)
 
 add_recursive_sources(tensine_core "${CMAKE_CURRENT_SOURCE_DIR}")
 add_recursive_sources(tensine_core "${PROJECT_SOURCE_DIR}/include")

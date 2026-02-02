@@ -23,22 +23,14 @@ void CONCAT_NAME(matmul_, NAME, _cpu)(
     size_t* out_dims = (size_t*)malloc(ndim * sizeof(size_t));
     memset(out_dims, 0, ndim * sizeof(size_t));
 
-    size_t batch_offset_input_1 = 0;
-    size_t batch_offset_input_2 = 0;
-    size_t batch_offset_output = 0;
     while(1) {
-        for (size_t dim = (ndim - 2); dim-- > 0;) {
-            if (dim > ndim) {
-                break; // for case where ndim <= 2 to handle underflow
-            }
-            if (out_dims[dim] <= output_shape[dim]) {
-                memset(out_dims + dim + 1, 0, (ndim - dim - 1) * sizeof(size_t));
-                batch_offset_input_1 += out_dims[dim] * input_1_strides[dim];
-                batch_offset_input_2 += out_dims[dim] * input_2_strides[dim];
-                batch_offset_output += out_dims[dim] * output_strides[dim];
-                out_dims[dim] += 1;
-                break;
-            }
+        size_t batch_offset_input_1 = 0;
+        size_t batch_offset_input_2 = 0;
+        size_t batch_offset_output = 0;
+        for (size_t dim = 0; dim < ndim - 2; ++dim) {
+            batch_offset_input_1 += out_dims[dim] * input_1_strides[dim];
+            batch_offset_input_2 += out_dims[dim] * input_2_strides[dim];
+            batch_offset_output += out_dims[dim] * output_strides[dim];
         }
 
         for (size_t row = 0; row < output_shape[ndim - 2]; ++row) {
@@ -56,10 +48,21 @@ void CONCAT_NAME(matmul_, NAME, _cpu)(
                 );
             }
         }
+
         if (ndim == 2) {
             break;
         }
 
+        for (size_t dim = (ndim - 2); dim-- > 0;) {
+            if (dim > ndim) {
+                break; // for case where ndim <= 2 to handle underflow
+            }
+            out_dims[dim] += 1;
+            if (out_dims[dim] <= output_shape[dim]) {
+                memset(out_dims + dim + 1, 0, (ndim - dim - 1) * sizeof(size_t));
+                break;
+            }
+        }
         if (out_dims[0] >= output_shape[0]) {
             break;
         }
