@@ -29,6 +29,33 @@ TsDType _get_buf_type(const py::array& buf) {
 }
 
 
+py::dtype ts_dtype_to_numpy(TsDType dtype) {
+    switch (dtype) {
+        case TS_DTYPE_FLOAT32: return py::dtype::of<float>();
+        case TS_DTYPE_FLOAT64: return py::dtype::of<double>();
+        case TS_DTYPE_INT32:   return py::dtype::of<int32_t>();
+        case TS_DTYPE_INT64:   return py::dtype::of<int64_t>();
+        default:
+            throw std::runtime_error("Unsupported dtype");
+    }
+}
+
+
+py::array copy_tensor_to_numpy(const TsTensor* t) {
+    py::dtype dtype = ts_dtype_to_numpy(t->dtype);
+
+    std::vector<ssize_t> shape(t->ndim);
+    for (size_t i = 0; i < t->ndim; i++) {
+        shape[i] = t->shape[i];
+    }
+
+    py::array arr(dtype, shape);
+    std::memcpy(arr.mutable_data(), t->storage->data, t->numel * dtype.itemsize());
+
+    return arr;
+}
+
+
 /* TODO:
     1. Add shape as property and return as array
     2. Check for contiguity for from buffer method
@@ -111,8 +138,12 @@ void bind_tensor(py::module_& m) {
                 return ts_tensor_empty_like(&src);
             }
         )
-        
+
         .def("print",[](const TsTensor& t) {
             ts_tensor_print(&t);
+        })
+
+        .def("to_numpy",[](const TsTensor& t) {
+            return copy_tensor_to_numpy(&t);
         });
 }
