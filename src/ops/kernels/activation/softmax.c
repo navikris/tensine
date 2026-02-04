@@ -6,7 +6,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <math.h>
-#include <stdio.h>
 
 
 #define T float
