@@ -10,21 +10,19 @@ Tensine is a lightweight, low-level tensor library written in **C**. The project
 
 ```
 tensine/
+├── bindings/
 ├── include/
 │   └── tensine/
 |       ├── core/
 |       └── ops/
 ├── src/
 |   ├── core/
-|   ├── ops/
-|   |   └── dispatch/
-|   |   └── kernels/
-│   └── CMakeLists.txt
+|   └── ops/
+|       └── dispatch/
+|       └── kernels/
 ├── tests/
 |   ├── core/
-|   ├── kernels/
-│   └── CMakeLists.txt
-├── CMakeLists.txt
+|   └── kernels/
 └── README.md
 ```
 
@@ -35,7 +33,7 @@ tensine/
 ### Requirements
 
 * CMake ≥ 3.31.6
-* C compiler (GCC / Clang)
+* C compiler (GCC)
 * Python ≥ 3.8 (for bindings)
 * pybind11 (included as submodule)
 
@@ -55,17 +53,11 @@ git submodule update --init --recursive
 ### Build (C Library + Tests)
 
 ```
-mkdir build
-cd build
-cmake ..
-cmake --build .
-```
-This produces a Python extension module in (tensine/python/tensine.so).
+chmod +x build.sh
 
-Add to path to use the python library
+./build.sh
 
-```
-export PYTHONPATH=$(pwd)/python:$PYTHONPATH
+export PYTHONPATH="$(pwd)/python:$PYTHONPATH"
 ```
 ---
 
