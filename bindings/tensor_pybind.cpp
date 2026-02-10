@@ -56,10 +56,18 @@ py::array copy_tensor_to_numpy(const TsTensor* t) {
 }
 
 
+std::vector<ssize_t> get_tensor_shape(const TsTensor* t) {
+    std::vector<ssize_t> shape(t->ndim);
+    for (size_t i = 0; i < t->ndim; i++) {
+        shape[i] = t->shape[i];
+    }
+    return shape;
+}
+
+
 /* TODO:
-    1. Add shape as property and return as array
-    2. Check for contiguity for from buffer method
-    3. Add support for initalizing from list as well
+    1. Check for contiguity for from buffer method
+    2. Add support for initalizing from list as well
 */
 void bind_tensor(py::module_& m) {
     py::class_<TsTensorStorage>(m, "TensorStorage")
@@ -129,7 +137,6 @@ void bind_tensor(py::module_& m) {
         })
 
         .def_readonly("dtype", &TsTensor::dtype)
-        .def_readonly("shape", &TsTensor::shape)
         .def_readonly("requires_grad", &TsTensor::requires_grad)
 
         // empty_like factory
@@ -143,7 +150,27 @@ void bind_tensor(py::module_& m) {
             ts_tensor_print(&t);
         })
 
+        .def("shape",[](const TsTensor& t) {
+            return get_tensor_shape(&t);
+        })
+
         .def("to_numpy",[](const TsTensor& t) {
             return copy_tensor_to_numpy(&t);
+        })
+
+        .def("reshape",[](const TsTensor& t, std::vector<size_t> shape) {
+            return ts_tensor_reshape(&t, shape.data(), shape.size());
+        })
+
+        .def("permute",[](const TsTensor& t, std::vector<size_t> order) {
+            return ts_tensor_permute(&t, order.data());
+        })
+
+        .def("transpose",[](const TsTensor& t, size_t dim_1, size_t dim_2) {
+            return ts_tensor_transpose(&t, dim_1, dim_2);
+        })
+
+        .def("slice",[](const TsTensor& t, std::vector<size_t> start_idxs, std::vector<size_t> end_idxs) {
+            return ts_tensor_slice(&t, start_idxs.data(), end_idxs.data());
         });
 }
