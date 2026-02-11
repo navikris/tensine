@@ -442,7 +442,7 @@ TsTensor* ts_tensor_permute(const TsTensor* src, const size_t* permute_order) {
         viewed_tensor->strides[dim] = src->strides[permute_order[dim]];
     }
 
-    return viewed_tensor;
+    return ts_tensor_to_contiguous(viewed_tensor);
 }
 
 
@@ -458,7 +458,7 @@ TsTensor* ts_tensor_transpose(const TsTensor* src, size_t dim_1, size_t dim_2) {
     viewed_tensor->shape[dim_2] = src->shape[dim_1];
     viewed_tensor->strides[dim_2] = src->strides[dim_1];
 
-    return viewed_tensor;
+    return ts_tensor_to_contiguous(viewed_tensor);
 }
 
 

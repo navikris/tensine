@@ -100,7 +100,9 @@ void bind_tensor(py::module_& m) {
         ) {
             py::buffer_info info = array.request();
             TsDType dtype = _get_buf_type(array);
-            return ts_tensor_from_buffer(
+            
+            // HACK: Need to add support for cloning data from buffer
+            TsTensor* copy_tensor = ts_tensor_from_buffer(
                 info.ptr,
                 dtype,
                 info.ndim,
@@ -108,6 +110,9 @@ void bind_tensor(py::module_& m) {
                 requires_grad,
                 nullptr
             );
+            TsTensor* new_tensor = ts_tensor_clone(copy_tensor);
+            ts_tensor_free(copy_tensor);
+            return new_tensor;
         }),
         py::arg("buf"),
         py::arg("requires_grad") = false
