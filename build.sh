@@ -12,6 +12,9 @@ python_env/bin/python -m pip install -r requirements.txt
 
 # Building the library
 echo "Building C library... "
-cmake --build build
+mkdir -p build
+cd build
+cmake ..
+make
 
 echo "Done :)"

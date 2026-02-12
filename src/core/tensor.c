@@ -406,7 +406,14 @@ TsTensor* ts_tensor_reshape(
     if (!src || !new_shape || (new_ndim==0)) return NULL;
 
     if (ts_tensor_is_contiguous(src)) {
-        TsTensor* viewed_tensor = ts_tensor_shallow_copy(src);
+        TsTensor* viewed_tensor = ts_tensor_from_storage(
+            src->storage,
+            src->dtype,
+            new_ndim,
+            new_shape,
+            src->requires_grad,
+            src->grad_fn
+        );
         if (!viewed_tensor) return NULL;
 
         viewed_tensor->ndim = new_ndim;        
