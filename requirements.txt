@@ -1,3 +1,5 @@
-torch
-pytest
+tqdm
 numpy
+pytest
+torch
+torchvision
