@@ -398,10 +398,115 @@ TsTensor* ts_tensor_to_contiguous(const TsTensor* src) {
 }
 
 
+static void _broadcast_seed_impl(
+    const TsTensor* src,
+    const TsTensor* dst,
+    size_t src_dim,
+    size_t dst_dim,
+    size_t src_ptr_offset,
+    size_t dst_ptr_offset,
+    const size_t* num_copies
+) {
+    if (src_dim == (src->ndim - 1)) {
+        char* src_ptr = (char*)src->storage->data + src_ptr_offset;
+        char* dst_ptr = (char*)dst->storage->data + dst_ptr_offset;
+        size_t nbytes = src->shape[src_dim] * src->strides[src_dim];
+        for (size_t i = 0; i < num_copies[dst_dim]; ++i) {
+            memcpy(dst_ptr + i * nbytes, src_ptr, nbytes);
+        }
+    } else {
+        for (size_t i = 0; i < src->shape[src_dim]; ++i) {
+            size_t new_src_offset = src_ptr_offset + src->strides[src_dim] * i;
+            size_t new_dst_offset = dst_ptr_offset + dst->strides[dst_dim] * i;
+            _broadcast_seed_impl(
+                src,
+                dst,
+                src_dim + 1,
+                dst_dim + 1,
+                new_src_offset,
+                new_dst_offset,
+                num_copies
+            );
+        }
+        char* dst_ptr = (char*)dst->storage->data + dst_ptr_offset;
+        size_t nbytes = src->shape[src_dim] * dst->strides[dst_dim];
+        for (size_t i = 1; i < num_copies[dst_dim]; ++i) {
+            memcpy(dst_ptr + i * nbytes, dst_ptr, nbytes);
+        }
+    }
+}
+
+
+TsTensor* ts_tensor_broadcast(
+    const TsTensor* src,
+    const size_t* new_shape,
+    size_t new_ndim
+) {
+    if (!src || !new_shape || (new_ndim==0)) return NULL;
+
+    // Validating the op inputs
+    assert (new_ndim <= src->ndim);
+    for (size_t i = 1; i < src->ndim + 1; ++i) {
+        assert (src->shape[src->ndim - i] <= new_shape[new_ndim - i]);
+        assert (new_shape[new_ndim - i] % src->shape[src->ndim - i] == 0);
+    }
+
+    if (ts_tensor_is_contiguous(src)) {
+        TsTensor* broadcasted_tensor = ts_tensor_create(
+            src->dtype,
+            new_ndim,
+            new_shape,
+            0,
+            NULL
+        );
+        if (!broadcasted_tensor) return NULL;
+
+        size_t* num_copies = malloc(new_ndim * sizeof(size_t));
+        size_t unsqueezed_ndims = new_ndim - src->ndim;
+        size_t leftover_copies = 0;
+        for (size_t dim = 0; dim < new_ndim; dim++) {
+            if (dim < unsqueezed_ndims) {
+                num_copies[dim] = new_shape[dim];
+                leftover_copies += new_shape[dim];
+            } else {
+                num_copies[dim] = new_shape[dim] / src->shape[dim - unsqueezed_ndims];
+            }
+        }
+
+        _broadcast_seed_impl(
+            src,
+            broadcasted_tensor,
+            0,
+            broadcasted_tensor->ndim - src->ndim,
+            0,
+            0,
+            num_copies
+        );
+
+        char* dst_ptr = (char*)broadcasted_tensor->storage->data;
+        size_t nbytes = broadcasted_tensor->shape[unsqueezed_ndims] \
+                         * broadcasted_tensor->strides[unsqueezed_ndims];
+        for (size_t i = 0; i < leftover_copies; ++i) {
+            memcpy(dst_ptr + nbytes * i , dst_ptr, nbytes);
+        }
+
+        return broadcasted_tensor;
+    }
+
+    // TODO: Add support for non contiguous src tensor
+    // Fallback to contiguous for now
+    TsTensor* src_contiguous = ts_tensor_to_contiguous(src);
+    TsTensor* broadcasted_tensor = ts_tensor_broadcast(src_contiguous, new_shape, new_ndim);
+    ts_tensor_free(src_contiguous);
+
+    return broadcasted_tensor;
+}
+
+
 TsTensor* ts_tensor_reshape(
     const TsTensor* src,
     const size_t* new_shape,
-    const size_t new_ndim
+    size_t new_ndim
 ) {
     if (!src || !new_shape || (new_ndim==0)) return NULL;
 

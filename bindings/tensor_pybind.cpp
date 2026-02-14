@@ -163,6 +163,10 @@ void bind_tensor(py::module_& m) {
             return copy_tensor_to_numpy(&t);
         })
 
+        .def("broadcast",[](const TsTensor& t, std::vector<size_t> shape) {
+            return ts_tensor_broadcast(&t, shape.data(), shape.size());
+        })
+
         .def("reshape",[](const TsTensor& t, std::vector<size_t> shape) {
             return ts_tensor_reshape(&t, shape.data(), shape.size());
         })

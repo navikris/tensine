@@ -59,7 +59,7 @@ def main():
     # Define the data loader that will handle fetching of data
     data_loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=1 # since ts_add() in linear is missing broadcast support
+        batch_size=64
     )
 
     # Test the model

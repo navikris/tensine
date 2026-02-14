@@ -69,6 +69,7 @@ TsTensor* ts_tensor_reshape(const TsTensor* src, const size_t* new_shape, size_t
 TsTensor* ts_tensor_permute(const TsTensor* src, const size_t* permute_order);
 TsTensor* ts_tensor_transpose(const TsTensor* src, size_t dim_1, size_t dim_2);
 TsTensor* ts_tensor_slice(const TsTensor* src, const size_t* start_idxs, const size_t* end_idxs);
+TsTensor* ts_tensor_broadcast(const TsTensor* src, const size_t* new_shape, size_t new_ndim);
 
 /* Copy/Layout */
 int ts_tensor_is_contiguous(const TsTensor* t);
